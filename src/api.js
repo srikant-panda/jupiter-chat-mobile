@@ -1,14 +1,37 @@
-const configuredApi = import.meta.env.VITE_API_URL?.trim();
-const devHostApi =
-  !configuredApi &&
-  typeof window !== "undefined" &&
-  (window.location.port === "5174" || window.location.port === "5173")
-    ? `${window.location.protocol}//${window.location.hostname}:3000/api`
-    : "";
+export function getApiBaseUrl() {
+  if (typeof window !== "undefined") {
+    const custom = localStorage.getItem("jupiter-chat.customApiUrl")?.trim();
+    if (custom) return custom.replace(/\/$/, "");
+  }
+  const configuredApi = import.meta.env.VITE_API_URL?.trim();
+  const devHostApi =
+    !configuredApi &&
+    typeof window !== "undefined" &&
+    (window.location.port === "5174" || window.location.port === "5173")
+      ? `${window.location.protocol}//${window.location.hostname}:3000/api`
+      : "";
 
-const API = (
-  configuredApi || devHostApi || "http://localhost:3000/api"
-).replace(/\/$/, "");
+  return (
+    configuredApi ||
+    devHostApi ||
+    (typeof window !== "undefined" && window.location.hostname !== "localhost"
+      ? `${window.location.protocol}//${window.location.hostname}:3000/api`
+      : "http://10.0.2.2:3000/api")
+  ).replace(/\/$/, "");
+}
+
+export function setCustomApiUrl(url) {
+  if (typeof window !== "undefined") {
+    const clean = (url || "").trim().replace(/\/$/, "");
+    if (clean) {
+      localStorage.setItem("jupiter-chat.customApiUrl", clean);
+    } else {
+      localStorage.removeItem("jupiter-chat.customApiUrl");
+    }
+  }
+}
+
+const API = getApiBaseUrl();
 
 // On mobile, keep token in localStorage so refreshing / reopening the PWA doesn't log the user out
 let accessToken =
@@ -37,8 +60,10 @@ const token = (v) =>
     .replace(/^Bearer\s+/i, "")
     .trim();
 
-const uncached = (p) =>
-  `${API}${p}${p.includes("?") ? "&" : "?"}_=${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const uncached = (p) => {
+  const base = getApiBaseUrl();
+  return `${base}${p}${p.includes("?") ? "&" : "?"}_=${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
 
 async function body(r) {
   const t = await r.text();
@@ -51,6 +76,7 @@ async function body(r) {
 }
 
 async function raw(path, opts = {}) {
+  const base = getApiBaseUrl();
   const h = new Headers(opts.headers || {});
   if (opts.body !== undefined && !(opts.body instanceof FormData)) {
     h.set("Content-Type", "application/json");
@@ -63,7 +89,7 @@ async function raw(path, opts = {}) {
 
   const method = (opts.method || "GET").toUpperCase();
   const r = await fetch(
-    method === "GET" || method === "HEAD" ? uncached(path) : `${API}${path}`,
+    method === "GET" || method === "HEAD" ? uncached(path) : `${base}${path}`,
     {
       ...opts,
       method,
@@ -180,12 +206,13 @@ export async function logout() {
 }
 
 export function getGoogleLoginUrl(redirectUrl) {
+  const base = getApiBaseUrl();
   const target =
     redirectUrl ||
     (typeof window !== "undefined"
       ? `${window.location.origin}/auth/callback`
       : "");
-  return `${API}/auth/login/google?redirect_url=${encodeURIComponent(target)}`;
+  return `${base}/auth/login/google?redirect_url=${encodeURIComponent(target)}`;
 }
 
 export function startGoogleLogin(redirectUrl) {
@@ -276,6 +303,7 @@ export async function streamMessage({
   signal,
 }) {
   async function attempt(retry = true) {
+    const base = getApiBaseUrl();
     const h = new Headers({
       "Content-Type": "application/json",
       Accept: "text/event-stream",
@@ -285,7 +313,7 @@ export async function streamMessage({
     if (accessToken) h.set("Authorization", `Bearer ${accessToken}`);
     const path = chatId ? `/message/${chatId}/stream` : `/message/stream`;
     const r = await fetch(
-      `${API}${path}?_=${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      `${base}${path}?_=${Date.now()}-${Math.random().toString(36).slice(2)}`,
       {
         method: "POST",
         headers: h,

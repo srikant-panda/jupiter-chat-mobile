@@ -20,10 +20,13 @@ import {
   Sliders,
   Database,
   ExternalLink,
+  Server,
+  Globe,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useChat } from "../../context/ChatContext";
+import { getApiBaseUrl, setCustomApiUrl } from "../../api";
 
 export default function MobileSettingsPage({
   open,
@@ -57,6 +60,19 @@ export default function MobileSettingsPage({
 
   // Sub-screen navigation: null = main settings, 'account' | 'about' | 'data'
   const [subScreen, setSubScreen] = useState(null);
+  const [serverUrl, setServerUrl] = useState(() => getApiBaseUrl());
+  const [editingServerUrl, setEditingServerUrl] = useState(false);
+  const [tempUrl, setTempUrl] = useState(() => getApiBaseUrl());
+  const [urlSaved, setUrlSaved] = useState(false);
+
+  const handleSaveServerUrl = () => {
+    triggerHaptic(15);
+    setCustomApiUrl(tempUrl);
+    setServerUrl(getApiBaseUrl());
+    setEditingServerUrl(false);
+    setUrlSaved(true);
+    setTimeout(() => setUrlSaved(false), 2000);
+  };
 
   if (!open) return null;
 
@@ -470,6 +486,96 @@ export default function MobileSettingsPage({
                 <Trash2 size={17} />
                 <span className="row-label">Clear All Conversations</span>
               </button>
+            </div>
+
+            {/* SECTION: BACKEND SERVER & NETWORK */}
+            <div className="mobile-settings-section-title">
+              Server Connection
+            </div>
+            <div className="mobile-settings-card">
+              <div className="mobile-settings-row">
+                <div className="mobile-row-info" style={{ width: "100%" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                    <span className="row-label" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Server size={15} /> Backend API URL
+                    </span>
+                    {urlSaved && <span style={{ color: "#10b981", fontSize: "11px", fontWeight: 600 }}>Saved!</span>}
+                  </div>
+                  <span className="row-desc" style={{ marginTop: "3px", wordBreak: "break-all" }}>
+                    {serverUrl}
+                  </span>
+                </div>
+              </div>
+
+              {editingServerUrl ? (
+                <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <input
+                    type="url"
+                    value={tempUrl}
+                    onChange={(e) => setTempUrl(e.target.value)}
+                    placeholder="https://your-api.com/api or http://192.168.1.x:3000/api"
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "var(--radius-sm)",
+                      backgroundColor: "var(--bg-surface)",
+                      border: "1px solid var(--border-default)",
+                      color: "var(--text-primary)",
+                      fontSize: "13px",
+                    }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setEditingServerUrl(false)}
+                      style={{
+                        padding: "5px 12px",
+                        borderRadius: "var(--radius-xs)",
+                        background: "var(--bg-surface-elevated)",
+                        color: "var(--text-secondary)",
+                        fontSize: "12px",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveServerUrl}
+                      style={{
+                        padding: "5px 14px",
+                        borderRadius: "var(--radius-xs)",
+                        background: "var(--accent)",
+                        color: "#fff",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Save URL
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempUrl(serverUrl);
+                    setEditingServerUrl(true);
+                  }}
+                  style={{
+                    alignSelf: "flex-start",
+                    marginTop: "10px",
+                    padding: "4px 10px",
+                    borderRadius: "var(--radius-xs)",
+                    backgroundColor: "var(--bg-surface-elevated)",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--accent)",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                  }}
+                >
+                  Change Server Address
+                </button>
+              )}
             </div>
 
             {/* SECTION: ABOUT & LOGOUT */}
