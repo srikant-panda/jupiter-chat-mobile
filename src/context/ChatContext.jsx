@@ -88,6 +88,39 @@ export function ChatProvider({ children }) {
   const [model, setModel] = useState(
     () => localStorage.getItem("jupiter-chat.model") || DEFAULT_MODEL
   );
+  const [modelMetadata, setModelMetadata] = useState(MODEL_METADATA);
+  const [activeModels, setActiveModels] = useState(MODELS);
+
+  const loadModels = useCallback(async () => {
+    try {
+      const res = await api.getModels();
+      if (res?.success && Array.isArray(res.models) && res.models.length > 0) {
+        const ids = res.models.map((m) => m.modelId);
+        setActiveModels(ids);
+        const meta = { ...MODEL_METADATA };
+        res.models.forEach((m) => {
+          meta[m.modelId] = {
+            name: m.name,
+            provider: m.provider,
+            desc: m.desc || "",
+            badge: m.badge || "Pro",
+            speed: m.speed || "Balanced",
+          };
+        });
+        setModelMetadata(meta);
+        setModel((current) => {
+          if (ids.includes(current)) return current;
+          return res.defaultModel || ids[0] || DEFAULT_MODEL;
+        });
+      }
+    } catch (err) {
+      console.warn("[MobileChatContext] Could not load models:", err.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadModels();
+  }, [loadModels]);
 
   const [drafts, setDrafts] = useState({});
   const [newChatNonce, setNewChatNonce] = useState(0);
@@ -362,8 +395,8 @@ export function ChatProvider({ children }) {
         setError,
         model,
         setModel,
-        MODELS,
-        MODEL_METADATA,
+        MODELS: activeModels,
+        MODEL_METADATA: modelMetadata,
         draft,
         setDraft,
         send,

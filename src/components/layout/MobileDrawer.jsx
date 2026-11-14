@@ -226,22 +226,40 @@ export default function MobileDrawer({ open, onClose, onOpenSettings }) {
               </div>
             </button>
           ) : (
-            <button
-              type="button"
-              className="mobile-user-profile-card"
-              onClick={() => {
-                onClose();
-                requestAuth("login");
-              }}
-            >
-              <div className="mobile-user-avatar guest">
-                <LogIn size={16} />
-              </div>
-              <div className="mobile-user-info">
-                <span className="mobile-user-name">Sign In</span>
-                <span className="mobile-user-sub">Save conversations</span>
-              </div>
-            </button>
+            <div style={{ display: "flex", gap: "8px", width: "100%" }}>
+              <button
+                type="button"
+                className="mobile-user-profile-card"
+                style={{ flex: 1 }}
+                onClick={() => {
+                  onClose();
+                  requestAuth("login");
+                }}
+              >
+                <div className="mobile-user-avatar guest">
+                  <LogIn size={16} />
+                </div>
+                <div className="mobile-user-info">
+                  <span className="mobile-user-name">Sign In</span>
+                  <span className="mobile-user-sub">Save conversations</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className="mobile-user-profile-card"
+                style={{ width: "52px", justifyContent: "center", padding: 0, flexShrink: 0 }}
+                onClick={() => {
+                  triggerHaptic(15);
+                  onClose();
+                  onOpenSettings();
+                }}
+                aria-label="Open Settings"
+                title="Settings"
+              >
+                <Settings size={19} style={{ color: "var(--text-secondary)" }} />
+              </button>
+            </div>
           )}
         </div>
       </aside>

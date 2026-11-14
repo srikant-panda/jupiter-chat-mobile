@@ -369,4 +369,9 @@ export async function streamMessage({
   return attempt(true);
 }
 
+export async function getModels() {
+  const d = await request("/models");
+  return d;
+}
+
 export { API };
