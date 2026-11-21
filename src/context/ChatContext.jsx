@@ -66,7 +66,7 @@ export function ChatProvider({ children }) {
   const rawChatId = matchDirect?.params?.chatId || matchChat?.params?.chatId;
   const chatId =
     rawChatId &&
-    !["auth", "chat", "login", "register", "landing", "settings"].includes(
+    !["temporary", "share", "auth", "chat", "login", "register", "landing", "settings"].includes(
       rawChatId
     )
       ? rawChatId
@@ -199,9 +199,9 @@ export function ChatProvider({ children }) {
   }, [chatId]);
 
   const activeChat = useMemo(() => {
-    if (!chatId) return null;
+    if (!chatId) return streamingChatIds.has("new") ? chats[0] || null : null;
     return chats.find((c) => String(c._id) === String(chatId)) || null;
-  }, [chats, chatId]);
+  }, [chats, chatId, streamingChatIds]);
 
   const isSending = useMemo(() => {
     const key = chatId ? String(chatId) : "new";
@@ -231,6 +231,8 @@ export function ChatProvider({ children }) {
     async (text) => {
       const prompt = (text || "").trim();
       if (!prompt) return;
+      if (!userRef.current) { requestAuth("login"); return; }
+      if (streamsRef.current.has(chatId ? String(chatId) : "new")) return;
 
       const streamKey = chatId ? String(chatId) : "new";
       const abortController = new AbortController();
@@ -271,7 +273,7 @@ export function ChatProvider({ children }) {
           model,
           signal: abortController.signal,
           onEvent: (event, payload) => {
-            if (event === "chunk" || event === "content") {
+            if (event === "token" || event === "chunk" || event === "content") {
               const piece =
                 typeof payload === "string"
                   ? payload
@@ -284,19 +286,23 @@ export function ChatProvider({ children }) {
                     : msg
                 )
               );
-            } else if (event === "chatId" || event === "chat_created") {
+            } else if (event === "chat" || event === "chatId" || event === "chat_created") {
               const id = payload?.chatId || payload?.id;
               if (id) {
                 newServerChatId = id;
+                setChats(prev => [{ _id: id, topic: payload.topic || prompt.slice(0, 40), model, updatedAt: new Date().toISOString() }, ...prev.filter(c => String(c._id) !== String(id))]);
               }
             } else if (event === "done" || event === "finish") {
-              if (payload?.chatId) newServerChatId = payload.chatId;
+              if (payload?.chatId) {
+                newServerChatId = payload.chatId;
+                setChats(prev => prev.map(c => String(c._id) === String(payload.chatId) ? { ...c, topic: payload.topic || c.topic } : c));
+              }
               setMessages((prev) =>
                 prev.map((msg) =>
                   msg._id === assistantMsgId
                     ? {
                         ...msg,
-                        content: payload?.content || accumulatedContent,
+                        content: payload?.reply || payload?.content || accumulatedContent,
                         streaming: false,
                         usage: payload?.usage,
                         _id: payload?.messageId || msg._id,
@@ -305,7 +311,7 @@ export function ChatProvider({ children }) {
                 )
               );
             } else if (event === "error") {
-              setError(payload?.message || "An error occurred.");
+              throw new Error(payload?.message || "An error occurred.");
             }
           },
         });

@@ -1,3 +1,5 @@
+import TemporaryChatPage from "./pages/TemporaryChatPage";
+import SharedChatPage from "./pages/SharedChatPage";
 import React, { Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -22,6 +24,8 @@ export default function App() {
         <ChatProvider>
           <Suspense fallback={<Loading />}>
             <Routes>
+              <Route path="/temporary" element={<TemporaryChatPage />} />
+              <Route path="/share/:token" element={<SharedChatPage />} />
               <Route path="/" element={<MobileChatRoute />} />
               <Route path="/chat" element={<MobileChatRoute />} />
               <Route path="/chat/:chatId" element={<MobileChatRoute />} />

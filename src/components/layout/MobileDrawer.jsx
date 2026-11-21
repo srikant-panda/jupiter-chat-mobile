@@ -1,3 +1,4 @@
+import Avatar from "../common/Avatar";
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -213,7 +214,7 @@ export default function MobileDrawer({ open, onClose, onOpenSettings }) {
               }}
             >
               <div className="mobile-user-avatar">
-                {(user.name || user.email || "U")[0].toUpperCase()}
+                <Avatar user={user} />
               </div>
               <div className="mobile-user-info">
                 <span className="mobile-user-name">{user.name || "User"}</span>

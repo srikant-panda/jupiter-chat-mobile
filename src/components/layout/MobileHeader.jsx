@@ -1,3 +1,6 @@
+import ShareDialog from "../chat/ShareDialog";
+import { Ghost, Share2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 import { Menu, SquarePen, ChevronDown } from "lucide-react";
 import { useChat } from "../../context/ChatContext";
@@ -5,7 +8,9 @@ import { useTheme } from "../../context/ThemeContext";
 import ModelSheet from "../chat/ModelSheet";
 
 export default function MobileHeader({ onOpenDrawer }) {
-  const { model, activeChat, newChat, MODEL_METADATA } = useChat();
+  const navigate = useNavigate();
+  const [shareOpen, setShareOpen] = useState(false);
+  const { model, activeChat, newChat, MODEL_METADATA, isSending } = useChat();
   const { triggerHaptic } = useTheme();
   const [modelSheetOpen, setModelSheetOpen] = useState(false);
 
@@ -65,6 +70,23 @@ export default function MobileHeader({ onOpenDrawer }) {
         {/* Right: New Chat button */}
         <div className="mobile-header-right">
           <button
+            className="mobile-header-icon-btn"
+            onClick={() => navigate("/temporary")}
+            aria-label="Start temporary chat"
+          >
+            <Ghost size={19} />
+          </button>
+          {activeChat && (
+            <button
+              className="mobile-header-icon-btn"
+              disabled={isSending}
+              onClick={() => setShareOpen(true)}
+              aria-label="Share chat"
+            >
+              <Share2 size={19} />
+            </button>
+          )}
+          <button
             type="button"
             className="mobile-header-icon-btn"
             onClick={handleNewChat}
@@ -75,6 +97,12 @@ export default function MobileHeader({ onOpenDrawer }) {
         </div>
       </header>
 
+      {shareOpen && activeChat && (
+        <ShareDialog
+          chatId={activeChat._id}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
       {/* Model Selection Bottom Sheet */}
       <ModelSheet
         open={modelSheetOpen}

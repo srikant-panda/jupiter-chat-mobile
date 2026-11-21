@@ -55,3 +55,24 @@ cd jupiter-chat-mobile
 npm run build
 npm run preview
 ```
+
+## Temporary chats, sharing and personalization
+
+- Use **Temporary** (the ghost icon on mobile) to open `/temporary`. Messages live
+  only in that page's memory and disappear on navigation or reload. This mode still
+  uses your account quota and personalization, and sends messages to the AI provider.
+- Use **Share** on a completed saved conversation to preview the saved messages and
+  create a public, read-only snapshot. `/share/:token` works without signing in.
+  Existing links keep their original snapshot. Revoke a link to publish a new one.
+- Settings now support a display name and profile photo, saved personal instructions,
+  and **Privacy & sharing** controls for copying/revoking existing links. On mobile,
+  profile editing is under Account Details, with personalization and privacy sections
+  on the main settings screen. Photo formats: PNG, JPEG or WebP under 600 KB.
+- Short generated titles replace the initial question excerpt after the first answer.
+
+Set `VITE_SHARE_URL` to the deployed web app's public origin for Android builds.
+Browser builds default to the current origin. The public frontend must serve the SPA
+for `/share/*` (the web app's Vercel rewrite already handles this).
+
+All new endpoints require the updated backend. Browser API parsing propagates SSE
+errors and reads only answer text; internal structured-output JSON stays on the server.

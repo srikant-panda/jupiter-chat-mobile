@@ -1,3 +1,6 @@
+import ProfileSettings from "./ProfileSettings";
+import SharedLinks from "./SharedLinks";
+import Avatar from "../common/Avatar";
 import React, { useState } from "react";
 import {
   ChevronLeft,
@@ -141,10 +144,11 @@ export default function MobileSettingsPage({
         {subScreen === "account" ? (
           /* SUB-SCREEN: ACCOUNT DETAILS */
           <div className="mobile-settings-subview">
+            {user && <div className="settings-enhanced-section"><ProfileSettings section="profile" /></div>}
             <div className="mobile-settings-card">
               <div className="mobile-settings-account-hero">
                 <div className="mobile-settings-avatar-large">
-                  {(user?.name || user?.email || "U")[0].toUpperCase()}
+                  <Avatar user={user} />
                 </div>
                 <h2 className="mobile-settings-user-name">
                   {user?.name || "User"}
@@ -177,7 +181,7 @@ export default function MobileSettingsPage({
                   />
                 </div>
                 <span className="mobile-usage-caption">
-                  {100 - usagePercent}% monthly allowance remaining
+                  {100 - usagePercent}% of this five-hour allowance remaining
                 </span>
               </div>
             </div>
@@ -260,7 +264,7 @@ export default function MobileSettingsPage({
                 }}
               >
                 <div className="mobile-settings-avatar">
-                  {(user.name || user.email || "U")[0].toUpperCase()}
+                  <Avatar user={user} />
                 </div>
                 <div className="mobile-settings-account-details">
                   <span className="account-card-name">
@@ -285,6 +289,7 @@ export default function MobileSettingsPage({
               </div>
             )}
 
+            {user && <><details className="settings-enhanced-section"><summary>Personalization</summary><ProfileSettings section="personalization" /></details><details className="settings-enhanced-section"><summary>Privacy & shared links</summary><SharedLinks /><p className="experience-hint">Temporary chats disappear when you leave or reload. AI providers still receive your messages.</p></details></>}
             {/* SECTION: APPEARANCE */}
             <div className="mobile-settings-section-title">Appearance</div>
             <div className="mobile-settings-card">

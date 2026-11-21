@@ -96,7 +96,7 @@ async function raw(path, opts = {}) {
       headers: h,
       credentials: "include",
       cache: "no-store",
-    }
+    },
   );
   return { response: r, data: await body(r) };
 }
@@ -106,7 +106,7 @@ async function doRefreshAccessToken() {
   try {
     const { response, data } = await raw("/auth/refresh", { method: "POST" });
     const t = token(
-      response.headers.get("Authorization") || data?.token || data?.accessToken
+      response.headers.get("Authorization") || data?.token || data?.accessToken,
     );
     if (t) {
       setAccessToken(t);
@@ -152,7 +152,7 @@ async function request(path, opts = {}, retry = true) {
     const e = new Error(
       r.data?.message ||
         r.data?.errors?.map?.((x) => x.message).join(" ") ||
-        `Request failed (${r.response.status})`
+        `Request failed (${r.response.status})`,
     );
     e.status = r.response.status;
     e.payload = r.data;
@@ -191,7 +191,9 @@ export async function signup(name, email, password, age) {
   }
   const t = token(response.headers.get("Authorization"));
   if (!t) {
-    throw new Error("Signup succeeded but no Authorization token was returned.");
+    throw new Error(
+      "Signup succeeded but no Authorization token was returned.",
+    );
   }
   setAccessToken(t);
   return data;
@@ -238,7 +240,7 @@ export async function exchangeOAuthCode(code, provider = "google") {
   });
   if (!response.ok) {
     const e = new Error(
-      data?.message || `Code exchange failed (${response.status})`
+      data?.message || `Code exchange failed (${response.status})`,
     );
     e.status = response.status;
     e.payload = data;
@@ -278,7 +280,7 @@ export async function getMe() {
 }
 
 export async function deleteUserAccount() {
-  return request("/user/delete-user");
+  return request("/user/", { method: "DELETE" });
 }
 
 export async function getRecentChats() {
@@ -300,6 +302,8 @@ export async function streamMessage({
   chatId,
   model,
   onEvent,
+  temporary = false,
+  history = [],
   signal,
 }) {
   async function attempt(retry = true) {
@@ -319,9 +323,13 @@ export async function streamMessage({
         headers: h,
         credentials: "include",
         cache: "no-store",
-        body: JSON.stringify({ content, model }),
+        body: JSON.stringify({
+          content,
+          model,
+          ...(temporary ? { temporary, history } : {}),
+        }),
         signal,
-      }
+      },
     );
     if (r.status === 401 && retry) {
       const ok = await refreshAccessToken();
@@ -349,22 +357,29 @@ export async function streamMessage({
         else if (line.startsWith("data:")) data += line.slice(5).trimStart();
       }
       if (!data) return;
+      let parsed;
       try {
-        onEvent(event, JSON.parse(data));
+        parsed = JSON.parse(data);
       } catch {
-        onEvent(event, { text: data });
+        parsed = { text: data };
       }
+      onEvent(event, parsed);
     };
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      let parts = buffer.split(/\n\n/);
-      buffer = parts.pop() || "";
-      for (const p of parts) emit(p);
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split(/\r?\n\r?\n/);
+        buffer = parts.pop() || "";
+        for (const part of parts) emit(part);
+      }
+      buffer += decoder.decode();
+      if (buffer.trim()) emit(buffer);
+    } finally {
+      await reader.cancel().catch(() => {});
+      reader.releaseLock();
     }
-    buffer += decoder.decode();
-    if (buffer.trim()) emit(buffer);
   }
   return attempt(true);
 }
@@ -375,3 +390,38 @@ export async function getModels() {
 }
 
 export { API };
+
+// Account personalization and read-only share snapshots.
+export const updateProfile = (values) =>
+  request("/user/profile", { method: "PATCH", body: JSON.stringify(values) });
+export const createShare = (id) =>
+  request(`/share/chat/${encodeURIComponent(id)}`, { method: "POST" });
+export const listShares = () => request("/share");
+export const revokeShare = (token) =>
+  request(`/share/${encodeURIComponent(token)}`, { method: "DELETE" });
+export async function getSharedChat(token) {
+  const base = getApiBaseUrl();
+  const response = await fetch(`${base}/share/${encodeURIComponent(token)}`, {
+    cache: "no-store",
+    credentials: "omit",
+  });
+  const data = await body(response);
+  if (!response.ok)
+    throw new Error(data.message || "This share link is unavailable.");
+  return data;
+}
+export function shareUrl(token) {
+  const configured = import.meta.env.VITE_SHARE_URL?.trim();
+  const origin = configured || window.location.origin;
+  if (
+    !configured &&
+    (window.Capacitor?.isNativePlatform?.() || !/^https?:/.test(origin))
+  )
+    throw new Error(
+      "Set VITE_SHARE_URL to your public web app URL to share from the Android app.",
+    );
+  const url = new URL(origin);
+  if (!["http:", "https:"].includes(url.protocol))
+    throw new Error("The share URL must use HTTPS or HTTP.");
+  return `${origin.replace(/\/$/, "")}/share/${encodeURIComponent(token)}`;
+}
