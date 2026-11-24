@@ -49,13 +49,6 @@ export const MODEL_METADATA = {
     badge: "Quick",
     speed: "Fast",
   },
-  "meta-llama/llama-3.3-70b-instruct": {
-    name: "Llama 3.3 70B",
-    provider: "Meta",
-    desc: "Open source powerhouse intelligence",
-    badge: "Pro",
-    speed: "Balanced",
-  },
 };
 
 export function ChatProvider({ children }) {
