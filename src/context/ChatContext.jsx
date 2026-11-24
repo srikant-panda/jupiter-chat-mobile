@@ -287,11 +287,12 @@ export function ChatProvider({ children }) {
           signal: abortController.signal,
           onEvent: (event, payload) => {
             if (event === "reasoning") {
+              const reset = typeof payload === "object" && Boolean(payload?.reset);
               const piece =
                 typeof payload === "string"
                   ? payload
                   : payload?.text || payload?.reasoning || "";
-              accumulatedReasoning += piece;
+              accumulatedReasoning = reset ? piece : accumulatedReasoning + piece;
               setMessages((prev) =>
                 prev.map((msg) =>
                   msg._id === assistantMsgId
