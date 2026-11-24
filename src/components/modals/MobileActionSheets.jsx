@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Trash2, LogOut, AlertTriangle, X, Check } from "lucide-react";
+import { Trash2, LogOut, AlertTriangle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 

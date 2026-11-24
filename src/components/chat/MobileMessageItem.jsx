@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Copy, Check, Pencil, RotateCw, Sparkles, User } from "lucide-react";
+import { Copy, Check, Pencil, Sparkles } from "lucide-react";
 import BrandGlyph from "../common/BrandGlyph";
 import MobileCodeBlock from "./MobileCodeBlock";
 import { useChat } from "../../context/ChatContext";
