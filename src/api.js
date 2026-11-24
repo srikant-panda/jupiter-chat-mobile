@@ -301,6 +301,7 @@ export async function streamMessage({
   content,
   chatId,
   model,
+  webSearch = false,
   onEvent,
   temporary = false,
   history = [],
@@ -326,6 +327,7 @@ export async function streamMessage({
         body: JSON.stringify({
           content,
           model,
+          webSearch: Boolean(webSearch),
           ...(temporary ? { temporary, history } : {}),
         }),
         signal,

@@ -739,6 +739,12 @@ textarea {
   color: var(--text-primary);
 }
 
+.mobile-search-btn.active {
+  background-color: var(--accent-soft, rgba(37, 99, 235, 0.18));
+  color: var(--accent);
+  box-shadow: 0 0 8px var(--accent-soft, rgba(37, 99, 235, 0.25));
+}
+
 .mobile-plus-btn {
   color: var(--text-secondary);
 }

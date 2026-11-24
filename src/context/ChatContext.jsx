@@ -88,6 +88,17 @@ export function ChatProvider({ children }) {
   const [model, setModel] = useState(
     () => localStorage.getItem("jupiter-chat.model") || DEFAULT_MODEL
   );
+  const [webSearch, setWebSearch] = useState(
+    () => localStorage.getItem("jupiter-chat.webSearch") === "true"
+  );
+
+  const toggleWebSearch = useCallback(() => {
+    setWebSearch((prev) => {
+      const next = !prev;
+      localStorage.setItem("jupiter-chat.webSearch", String(next));
+      return next;
+    });
+  }, []);
   const [modelMetadata, setModelMetadata] = useState(MODEL_METADATA);
   const [activeModels, setActiveModels] = useState(MODELS);
 
@@ -272,6 +283,7 @@ export function ChatProvider({ children }) {
           content: prompt,
           chatId,
           model,
+          webSearch,
           signal: abortController.signal,
           onEvent: (event, payload) => {
             if (event === "reasoning") {
@@ -416,6 +428,9 @@ export function ChatProvider({ children }) {
         setError,
         model,
         setModel,
+        webSearch,
+        setWebSearch,
+        toggleWebSearch,
         MODELS: activeModels,
         MODEL_METADATA: modelMetadata,
         draft,

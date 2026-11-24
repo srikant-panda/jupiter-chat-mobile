@@ -1,10 +1,10 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Plus, ArrowUp, Square, Mic, X } from "lucide-react";
+import { Plus, ArrowUp, Square, Mic, X, Globe } from "lucide-react";
 import { useChat } from "../../context/ChatContext";
 import { useTheme } from "../../context/ThemeContext";
 
 export default function MobileComposer() {
-  const { draft, setDraft, send, stopStreaming, isSending } = useChat();
+  const { draft, setDraft, send, stopStreaming, isSending, webSearch, toggleWebSearch } = useChat();
   const { triggerHaptic } = useTheme();
   const textareaRef = useRef(null);
   const [toastMessage, setToastMessage] = useState("");
@@ -108,6 +108,21 @@ export default function MobileComposer() {
 
         {/* Right action group */}
         <div className="mobile-composer-right-actions">
+          {/* Web Search toggle */}
+          <button
+            type="button"
+            className={`mobile-composer-btn mobile-search-btn ${webSearch ? "active" : ""}`}
+            onClick={() => {
+              triggerHaptic(15);
+              toggleWebSearch();
+            }}
+            aria-label="Toggle web search"
+            aria-pressed={webSearch}
+            title={webSearch ? "Web search ON" : "Search web"}
+          >
+            <Globe size={18} />
+          </button>
+
           {!hasDraft && !isSending && (
             <button
               type="button"
