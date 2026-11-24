@@ -14,19 +14,26 @@ import { useAuth } from "./AuthContext";
 const ChatContext = createContext(null);
 
 export const DEFAULT_MODEL =
-  import.meta.env.VITE_DEFAULT_MODEL || "openrouter/free";
+  import.meta.env.VITE_DEFAULT_MODEL || "free";
 export const MODELS = (import.meta.env.VITE_MODELS || DEFAULT_MODEL)
   .split(",")
   .map((x) => x.trim())
   .filter(Boolean);
 
 export const MODEL_METADATA = {
+  free: {
+    name: "Jupiter Auto",
+    provider: "Auto (Multi-Provider)",
+    desc: "Dynamic multi-provider failover (Groq → OpenRouter → Gemini)",
+    badge: "Auto",
+    speed: "Ultra Fast",
+  },
   "openrouter/free": {
     name: "Jupiter Free",
     provider: "OpenRouter",
     desc: "Fast, intelligent, everyday reasoning",
     badge: "Free",
-    speed: "Ultra Fast",
+    speed: "Fast",
   },
   "google/gemini-2.0-flash": {
     name: "Gemini 2.0 Flash",
