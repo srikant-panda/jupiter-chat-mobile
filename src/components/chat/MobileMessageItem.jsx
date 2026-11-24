@@ -1,11 +1,59 @@
 import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Copy, Check, Pencil, Sparkles } from "lucide-react";
+import { Copy, Check, Pencil, Sparkles, Brain, ChevronDown } from "lucide-react";
 import BrandGlyph from "../common/BrandGlyph";
 import MobileCodeBlock from "./MobileCodeBlock";
 import { useChat } from "../../context/ChatContext";
 import { useTheme } from "../../context/ThemeContext";
+
+function MobileReasoningBlock({ reasoning, streaming, hasContent }) {
+  const [userToggled, setUserToggled] = useState(null);
+  const isExpanded =
+    userToggled !== null ? userToggled : Boolean(streaming && !hasContent);
+
+  if (!reasoning) return null;
+
+  return (
+    <div className={`reasoning-block ${isExpanded ? "expanded" : "collapsed"}`}>
+      <button
+        type="button"
+        className="reasoning-toggle-btn"
+        onClick={() => setUserToggled(!isExpanded)}
+        aria-expanded={isExpanded}
+        title={isExpanded ? "Hide thought process" : "Show thought process"}
+      >
+        <div className="reasoning-label">
+          <Brain size={13} className="reasoning-icon" />
+          <span>
+            {streaming && !hasContent ? "Thinking..." : "Thought process"}
+          </span>
+          {streaming && !hasContent && (
+            <span className="reasoning-live-pulse" />
+          )}
+        </div>
+        <div className="reasoning-toggle-arrow">
+          <ChevronDown
+            size={13}
+            style={{
+              transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.2s ease",
+            }}
+          />
+        </div>
+      </button>
+
+      {isExpanded && (
+        <div className="reasoning-content">
+          <div className="reasoning-text">
+            {reasoning}
+            {streaming && !hasContent && <span className="mobile-cursor-blink" />}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function MobileMessageItem({ message }) {
   const { isSending, send } = useChat();
@@ -115,6 +163,14 @@ export default function MobileMessageItem({ message }) {
           <span className="mobile-assistant-name">Jupiter</span>
           {timeString && <span className="mobile-msg-time">{timeString}</span>}
         </div>
+
+        {message.reasoning && (
+          <MobileReasoningBlock
+            reasoning={message.reasoning}
+            streaming={message.streaming}
+            hasContent={Boolean(message.content)}
+          />
+        )}
 
         <div className="mobile-assistant-body">
           {!message.content && message.streaming ? (

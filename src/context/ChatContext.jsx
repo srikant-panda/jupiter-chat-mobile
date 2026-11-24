@@ -257,6 +257,7 @@ export function ChatProvider({ children }) {
       setMessages((prev) => [...prev, userMessage, placeholderAssistant]);
 
       let accumulatedContent = "";
+      let accumulatedReasoning = "";
       let newServerChatId = null;
 
       try {
@@ -266,7 +267,20 @@ export function ChatProvider({ children }) {
           model,
           signal: abortController.signal,
           onEvent: (event, payload) => {
-            if (event === "token" || event === "chunk" || event === "content") {
+            if (event === "reasoning") {
+              const piece =
+                typeof payload === "string"
+                  ? payload
+                  : payload?.text || payload?.reasoning || "";
+              accumulatedReasoning += piece;
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg._id === assistantMsgId
+                    ? { ...msg, reasoning: accumulatedReasoning, streaming: true }
+                    : msg
+                )
+              );
+            } else if (event === "token" || event === "chunk" || event === "content") {
               const piece =
                 typeof payload === "string"
                   ? payload
@@ -275,7 +289,7 @@ export function ChatProvider({ children }) {
               setMessages((prev) =>
                 prev.map((msg) =>
                   msg._id === assistantMsgId
-                    ? { ...msg, content: accumulatedContent, streaming: true }
+                    ? { ...msg, content: accumulatedContent, reasoning: accumulatedReasoning, streaming: true }
                     : msg
                 )
               );
@@ -296,6 +310,7 @@ export function ChatProvider({ children }) {
                     ? {
                         ...msg,
                         content: payload?.reply || payload?.content || accumulatedContent,
+                        reasoning: payload?.reasoning || accumulatedReasoning,
                         streaming: false,
                         usage: payload?.usage,
                         _id: payload?.messageId || msg._id,
